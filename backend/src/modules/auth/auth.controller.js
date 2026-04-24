@@ -10,10 +10,11 @@ const authSchema = z.object({
 });
 
 const setRefreshCookie = (res, token) => {
+  const isProd = process.env.NODE_ENV === 'production';
   res.cookie('refreshToken', token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production', 
-    sameSite: 'strict',
+    secure: isProd, 
+    sameSite: isProd ? 'none' : 'lax',
     maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
   });
 };
@@ -55,10 +56,11 @@ exports.refresh = catchAsync(async (req, res) => {
 });
 
 exports.logout = catchAsync(async (req, res) => {
+  const isProd = process.env.NODE_ENV === 'production';
   res.cookie('refreshToken', 'logout', {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
     expires: new Date(Date.now() + 5 * 1000) // expires immediately
   });
 
