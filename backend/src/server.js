@@ -57,8 +57,8 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// Handle preflight requests
-app.options('*', cors());
+// Handle preflight requests (using compatible wildcard syntax for Express 5+)
+app.options('(.*)', cors());
 
 app.use(express.json());
 app.use(cookieParser());
