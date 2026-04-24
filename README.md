@@ -1,56 +1,70 @@
-# Career Intelligence
+# 🛰️ Career Intelligence: Adaptive Career GPS
+![Version](https://img.shields.io/badge/version-v1.0.0-blue)
+![Status](https://img.shields.io/badge/status-stable-green)
+![License](https://img.shields.io/badge/license-MIT-purple)
 
-**The Predictive Career GPS for Engineers.**
+**Stop guessing your career path. Let your code tell the story.**
 
-Career Intelligence is a production-ready platform that verifies your technical skills by analyzing your actual code, identifies critical gaps for your target roles, and provides a personalized roadmap to job-readiness.
+Career Intelligence is an AI-powered growth platform that performs deep **AST (Abstract Syntax Tree)** analysis on your actual GitHub repositories to calculate your true technical depth, identify critical skill gaps, and provide a personalized roadmap to become "Job-Ready."
 
-## 🚀 Core Features
+---
 
-### 🧠 AST Parsing Engine
-Unlike simple keyword search, our engine uses **Abstract Syntax Tree (AST)** parsing via Babel to detect pattern depth. It distinguishes between someone who just installed React and someone who builds custom hooks and advanced middleware.
+### 🚀 Key Features
+- **Semantic Code Analysis**: Uses Babel to detect advanced architectural patterns (Custom Hooks, Middleware, etc.) beyond simple dependency counts.
+- **Role-Weighted Scoring**: Evaluates you against real-world job requirements using the **Core + Depth + Momentum** formula.
+- **Evidence Transparency**: See exactly which repositories and files contributed to each skill score via the **Trust Check** dashboard.
+- **Grounded Readiness**: Understand your "Profile Grade" (A, B, C) and technical readiness for Junior, Mid, or Senior-level roles.
 
-### 🧭 Predictive Career GPS
-Know exactly where you stand. Our GPS banner estimates your "Time to Job-Ready" in weeks, based on your current skill gaps and your specific daily time commitment.
+---
 
-### 🎯 Decision-Centric Recommendations
-Stop guessing what project to build next. Our engine suggests the **"Perfect Challenge"**—projects that are exactly 5-15 points above your current level and align with the mandatory requirements of your target role.
-
-### 📈 Progress Tracking
-Visualize your growth with time-series CareerScore tracking. Every evaluation snapshot is preserved, allowing you to see your technical delta over time.
-
-## 🛠️ Architecture
-
-### Tech Stack
-- **Frontend**: React, Tailwind CSS, Recharts, Lucide Icons.
+### 🛠️ Tech Stack
+- **Frontend**: React 18, TailwindCSS, Recharts (Visualizations), Lucide React.
 - **Backend**: Node.js, Express, MongoDB (Mongoose).
-- **Analysis**: Babel Parser, GitHub REST API.
-- **Jobs**: In-memory job processor with status tracking.
+- **Engine**: Babel Parser & Traverse for AST analysis.
+- **Integration**: GitHub REST API with recursive tree scanning.
 
-### Scoring Formula
-The `CareerScore` is a weighted aggregate of:
-- **Presence (20%)**: Dependency detection in `package.json`.
-- **Usage (30%)**: Frequency of patterns found in source code.
-- **Depth (50%)**: Advanced pattern detection (AST evidence of hooks, middleware, etc.).
+---
 
-## 🏁 Getting Started
-
-### Prerequisites
-- Node.js (v18+)
-- MongoDB
-- GitHub Personal Access Token (for high rate limits)
-
-### Installation
-1. Clone the repository.
-2. Install dependencies: `npm install` in both `frontend` and `backend`.
-3. Set environment variables in `.env`:
+### 🏁 Quick Start
+1. **Clone & Install**:
+   ```bash
+   git clone https://github.com/Tanilkrishna/career-intelligence.git
+   cd career-intelligence
+   # Install backend
+   cd backend && npm install
+   # Install frontend
+   cd ../frontend && npm install
+   ```
+2. **Environment**:
+   Create a `.env` in the `backend/` folder:
    ```env
    PORT=5000
-   MONGODB_URI=mongodb://localhost:27017/career-intel
+   MONGO_URI=your_mongodb_uri
    JWT_SECRET=your_secret
-   GITHUB_TOKEN=your_token
+   GITHUB_TOKEN=your_personal_access_token (recommended for rate limits)
    ```
-4. Run the seed script: `cd backend && node scripts/seed.js`.
-5. Start the development servers: `npm run dev`.
+3. **Run**:
+   - Backend: `npm run dev` (inside /backend)
+   - Frontend: `npm run dev` (inside /frontend)
 
-## 📜 License
-MIT
+---
+
+### 🧭 Scoring Logic
+- **Core Score (600 pts)**: Tied to meeting mandatory role requirements.
+- **Depth Bonus (300 pts)**: Calculated from tiered technical pattern detection.
+- **Momentum (100 pts)**: Based on activity and evaluation frequency.
+
+---
+
+### 🛡️ Known Limitations
+- **Language Support**: Currently optimized for the JavaScript/TypeScript ecosystem.
+- **Rate Limits**: Performance depends on GitHub API rate limits (Personal Access Token highly recommended).
+- **Sampling**: Large repositories are sampled to ensure fast, responsive evaluations.
+
+---
+
+### 📣 Soft Launch
+> "I built a tool that analyzes your real GitHub code (not your resume) and tells you exactly what to build next to become job-ready."
+
+---
+*Created with ❤️ for the Engineering Community.*
