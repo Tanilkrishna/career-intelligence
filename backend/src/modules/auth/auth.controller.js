@@ -40,6 +40,9 @@ exports.login = catchAsync(async (req, res) => {
   }
 
   const { email, password } = parsed.data;
+  
+  console.log(`[Login] Attempting login for: ${email}`);
+  
   const { user, accessToken, refreshToken } = await authService.login(email, password);
 
   setRefreshCookie(res, refreshToken);
