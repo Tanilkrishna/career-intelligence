@@ -11,12 +11,19 @@ const authSchema = z.object({
 
 const setRefreshCookie = (res, token) => {
   const isProd = process.env.NODE_ENV === 'production';
-  res.cookie('refreshToken', token, {
+  
+  const cookieOptions = {
     httpOnly: true,
-    secure: isProd, // Must be true in production
-    sameSite: isProd ? 'none' : 'lax', // Must be 'none' for cross-domain
-    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-  });
+    secure: isProd, // Must be true in production for SameSite: none
+    sameSite: isProd ? 'none' : 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    path: '/', // Ensure it's available for all routes
+  };
+
+  // Log cookie setting for debugging (non-sensitive part)
+  console.log(`[Cookie] Setting refreshToken. Prod: ${isProd}, Secure: ${cookieOptions.secure}, SameSite: ${cookieOptions.sameSite}`);
+  
+  res.cookie('refreshToken', token, cookieOptions);
 };
 
 exports.register = catchAsync(async (req, res) => {

@@ -23,31 +23,43 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // If 401 and we haven't retried yet
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-
-      try {
-        // Attempt to refresh
-        const res = await apiClient.post('/auth/refresh');
-        const newAccessToken = res.data.data.accessToken;
-        
-        // Update local storage
-        localStorage.setItem('token', newAccessToken);
-        
-        // Update original request header and retry
-        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-        return apiClient(originalRequest);
-      } catch (refreshError) {
-        // Refresh failed (e.g., refresh token expired) -> force logout
+    // 1. Skip refresh logic if the request is ALREADY to the refresh endpoint
+    // 2. Skip if it's not a 401 error
+    // 3. Skip if we've already retried this request
+    if (
+      originalRequest.url.includes('/auth/refresh') || 
+      error.response?.status !== 401 || 
+      originalRequest._retry
+    ) {
+      // If it was a refresh request that failed with 401, we must logout
+      if (originalRequest.url.includes('/auth/refresh')) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         window.location.href = '/login';
-        return Promise.reject(refreshError);
       }
+      return Promise.reject(error);
     }
 
-    return Promise.reject(error);
+    originalRequest._retry = true;
+
+    try {
+      // Attempt to refresh - use the same instance but it won't loop due to the check above
+      const res = await apiClient.post('/auth/refresh', {}, { withCredentials: true });
+      const newAccessToken = res.data.data.accessToken;
+      
+      // Update local storage
+      localStorage.setItem('token', newAccessToken);
+      
+      // Update original request header and retry
+      originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+      return apiClient(originalRequest);
+    } catch (refreshError) {
+      // Refresh failed (e.g., refresh token expired) -> force logout
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+      return Promise.reject(refreshError);
+    }
   }
 );
 
