@@ -108,7 +108,7 @@ exports.processAnalysisJob = async (jobData) => {
             ],
             lastEvaluated: new Date()
           },
-          { upsert: true, new: true }
+          { upsert: true, returnDocument: 'after' }
         );
         evaluatedSkills.push(savedSkill);
       }

@@ -17,6 +17,21 @@ apiClient.interceptors.request.use((config) => {
   return config;
 }, (error) => Promise.reject(error));
 
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  
+  failedQueue = [];
+};
+
 // Response interceptor for auto-refresh
 apiClient.interceptors.response.use(
   (response) => response,
@@ -24,15 +39,8 @@ apiClient.interceptors.response.use(
     const originalRequest = error.config;
 
     // 1. Skip refresh logic if the request is ALREADY to the refresh endpoint
-    // 2. Skip if it's not a 401 error
-    // 3. Skip if we've already retried this request
-    if (
-      originalRequest.url.includes('/auth/refresh') || 
-      error.response?.status !== 401 || 
-      originalRequest._retry
-    ) {
-      // If it was a refresh request that failed with 401, we must logout
-      if (originalRequest.url.includes('/auth/refresh')) {
+    if (originalRequest.url.includes('/auth/refresh')) {
+      if (error.response?.status === 401) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         window.location.href = '/login';
@@ -40,26 +48,50 @@ apiClient.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    originalRequest._retry = true;
+    // 2. Handle 401 errors
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      
+      if (isRefreshing) {
+        // Queue this request and wait for the ongoing refresh
+        return new Promise(function(resolve, reject) {
+          failedQueue.push({ resolve, reject });
+        })
+          .then(token => {
+            originalRequest.headers['Authorization'] = 'Bearer ' + token;
+            return apiClient(originalRequest);
+          })
+          .catch(err => {
+            return Promise.reject(err);
+          });
+      }
 
-    try {
-      // Attempt to refresh - use the same instance but it won't loop due to the check above
-      const res = await apiClient.post('/auth/refresh', {}, { withCredentials: true });
-      const newAccessToken = res.data.data.accessToken;
-      
-      // Update local storage
-      localStorage.setItem('token', newAccessToken);
-      
-      // Update original request header and retry
-      originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-      return apiClient(originalRequest);
-    } catch (refreshError) {
-      // Refresh failed (e.g., refresh token expired) -> force logout
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
-      return Promise.reject(refreshError);
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      return new Promise(function(resolve, reject) {
+        apiClient.post('/auth/refresh', {}, { withCredentials: true })
+          .then(({ data }) => {
+            const newAccessToken = data.data.accessToken;
+            localStorage.setItem('token', newAccessToken);
+            originalRequest.headers['Authorization'] = 'Bearer ' + newAccessToken;
+            
+            processQueue(null, newAccessToken);
+            resolve(apiClient(originalRequest));
+          })
+          .catch((err) => {
+            processQueue(err, null);
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/login';
+            reject(err);
+          })
+          .finally(() => {
+            isRefreshing = false;
+          });
+      });
     }
+
+    return Promise.reject(error);
   }
 );
 

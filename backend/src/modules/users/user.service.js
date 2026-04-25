@@ -13,7 +13,7 @@ exports.updateOnboarding = async (userId, onboardingData) => {
   const user = await User.findByIdAndUpdate(
     userId,
     { $set: onboardingData },
-    { new: true, runValidators: true }
+    { returnDocument: 'after', runValidators: true }
   ).select('-passwordHash');
 
   if (!user) {

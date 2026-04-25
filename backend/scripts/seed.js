@@ -40,7 +40,7 @@ const seedData = async (shouldExit = true) => {
       const dbSkill = await Skill.findOneAndUpdate(
         { name: skill.name },
         { $set: skill },
-        { upsert: true, new: true }
+        { upsert: true, returnDocument: 'after' }
       );
       skillMap[skill.name] = dbSkill._id;
       console.log(`  - Upserted skill: ${skill.name}`);
@@ -65,7 +65,7 @@ const seedData = async (shouldExit = true) => {
       await JobRequirement.findOneAndUpdate(
         { role: req.role },
         { $set: { requiredSkills: formattedSkills } },
-        { upsert: true, new: true }
+        { upsert: true, returnDocument: 'after' }
       );
       console.log(`  - Upserted job requirement: ${req.role}`);
     }
@@ -83,7 +83,7 @@ const seedData = async (shouldExit = true) => {
             targetRole: u.targetRole
           }
         },
-        { upsert: true, new: true }
+        { upsert: true, returnDocument: 'after' }
       );
       console.log(`  - Upserted user: ${u.email}`);
     }
@@ -105,7 +105,7 @@ const seedData = async (shouldExit = true) => {
       await Project.findOneAndUpdate(
         { title: proj.title },
         { $set: projectData },
-        { upsert: true, new: true }
+        { upsert: true, returnDocument: 'after' }
       );
       console.log(`  - Upserted project: ${proj.title}`);
     }
