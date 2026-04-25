@@ -10,12 +10,35 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/career-intelligence';
 
+// --- Production Guards & Logging ---
+console.log(`[Config] NODE_ENV: ${process.env.NODE_ENV}`);
+// Log a masked version of URI for safety
+console.log(`[Config] MONGO_URI: ${MONGO_URI.replace(/:([^@]+)@/, ':****@')}`);
+
+if (process.env.NODE_ENV === 'production' && MONGO_URI.includes('localhost')) {
+  console.error('❌ CRITICAL ERROR: Production environment is pointing to a local database!');
+  process.exit(1);
+}
+// ------------------------------------
+
 // Required for secure cookies on Render/Heroku/etc.
 app.set('trust proxy', 1);
 
+const Skill = require('./modules/skills/skill.model');
+const seedData = require('../scripts/seed');
+
 // Connect to MongoDB
 mongoose.connect(MONGO_URI)
-  .then(() => console.log('Connected to MongoDB'))
+  .then(async () => {
+    console.log('Connected to MongoDB');
+    
+    // Auto-seed if database is empty
+    const skillCount = await Skill.countDocuments();
+    if (skillCount === 0) {
+      console.log('🌱 Database appears empty. Running initial seed...');
+      await seedData(false);
+    }
+  })
   .catch(err => console.error('MongoDB connection error:', err));
 
 // Security Middlewares
@@ -78,8 +101,8 @@ const corsOptions = {
 // Apply CORS to all routes
 app.use(cors(corsOptions));
 
-// Explicitly handle preflight requests for all routes
-app.options("*", cors(corsOptions));
+// Explicitly handle preflight requests for all routes (Express 5 compatibility)
+app.options(/.*/, cors(corsOptions));
 
 // Initialize background worker
 require('./jobs/worker');

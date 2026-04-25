@@ -8,4 +8,7 @@ const analysisJobSchema = new mongoose.Schema({
   error: { type: String }
 }, { timestamps: true });
 
+analysisJobSchema.index({ userId: 1 });
+analysisJobSchema.index({ createdAt: -1 });
+
 module.exports = mongoose.model('AnalysisJob', analysisJobSchema);

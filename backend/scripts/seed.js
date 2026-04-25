@@ -20,10 +20,13 @@ function normalize(str) {
   return str.toLowerCase().replace(/[^a-z0-9]/g, '');
 }
 
-const seedData = async () => {
+const seedData = async (shouldExit = true) => {
   try {
-    await mongoose.connect(MONGO_URI);
-    console.log('[Seed] Connected to MongoDB');
+    // If not already connected, connect
+    if (mongoose.connection.readyState === 0) {
+      await mongoose.connect(MONGO_URI);
+      console.log('[Seed] Connected to MongoDB');
+    }
 
     // 1. Seed Skills (Idempotent)
     console.log('\n[Seed] Seeding skills...');
@@ -108,11 +111,16 @@ const seedData = async () => {
     }
 
     console.log('\n[Seed] Seeding completed successfully! 🎉');
-    process.exit(0);
+    if (shouldExit) process.exit(0);
   } catch (error) {
     console.error('\n[Seed] 💥 Error seeding data:', error);
-    process.exit(1);
+    if (shouldExit) process.exit(1);
+    throw error;
   }
 };
 
-seedData();
+if (require.main === module) {
+  seedData();
+}
+
+module.exports = seedData;
