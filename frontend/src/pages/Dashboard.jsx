@@ -84,13 +84,13 @@ const Dashboard = () => {
       
       {/* Welcome Back Banner */}
       {user && (
-        <div className="bg-gradient-to-r from-indigo-900/40 to-blue-900/40 border border-indigo-500/30 rounded-2xl p-6 shadow-lg flex items-center justify-between">
+        <div className="bg-gradient-to-r from-indigo-900/40 to-blue-900/40 border border-indigo-500/30 rounded-2xl p-6 shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h2 className="text-xl font-bold text-white mb-1">Welcome back, {user.email.split('@')[0]}! 👋</h2>
             <p className="text-indigo-200">Your true potential is unlocked. Keep building.</p>
           </div>
           {delta !== 0 && (
-            <div className="bg-indigo-950/50 px-4 py-2 rounded-lg border border-indigo-500/50 flex flex-col items-end">
+            <div className="bg-indigo-950/50 px-4 py-2 rounded-lg border border-indigo-500/50 flex flex-col items-start md:items-end w-fit">
               <span className="text-sm text-indigo-300">Since last run</span>
               <span className={`text-lg font-bold flex items-center space-x-1 ${delta > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                 {delta > 0 ? '+' : ''}{delta} Points
@@ -102,13 +102,13 @@ const Dashboard = () => {
 
       {/* Career Readiness Tier */}
       {score?.score !== undefined && (
-        <div className={`border rounded-2xl p-6 shadow-lg flex items-center justify-between ${
+        <div className={`border rounded-2xl p-6 shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 ${
           score.score > 600 ? 'bg-emerald-950/20 border-emerald-500/30' : 
           score.score > 300 ? 'bg-blue-950/20 border-blue-500/30' : 
           'bg-gray-900/40 border-gray-700'
         }`}>
-          <div className="flex items-center space-x-4">
-            <div className={`p-3 rounded-xl ${
+          <div className="flex items-start space-x-4">
+            <div className={`p-3 rounded-xl shrink-0 ${
               score.score > 600 ? 'bg-emerald-500/20' : 
               score.score > 300 ? 'bg-blue-500/20' : 
               'bg-gray-700/20'
@@ -125,14 +125,14 @@ const Dashboard = () => {
                  score.score > 600 ? 'High Competence' :
                  score.score > 300 ? 'Mid-Level Readiness' : 'Building Foundations'}
               </h3>
-              <p className="text-gray-400 text-sm">
+              <p className="text-gray-400 text-sm max-w-md">
                 {score.score > 600 ? 'You are ready for Senior-level responsibilities.' :
                  score.score > 300 ? 'Solid foundation. Competitive for Junior-Mid roles.' :
                  'Keep building your core skills to unlock new career opportunities.'}
               </p>
             </div>
           </div>
-          <div className={`text-center px-6 py-2 rounded-xl border ${
+          <div className={`text-center px-6 py-2 rounded-xl border w-full sm:w-auto ${
             score.score > 600 ? 'bg-emerald-950/40 border-emerald-500/20 text-emerald-400' : 
             score.score > 300 ? 'bg-blue-950/40 border-blue-500/20 text-blue-400' : 
             'bg-gray-900 border-gray-700 text-gray-400'
@@ -150,27 +150,27 @@ const Dashboard = () => {
       )}
 
       {/* Top Banner / Run Analysis */}
-      <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 shadow-xl flex items-center justify-between">
-        <div>
-          <h3 className="text-2xl font-bold text-white mb-1">Target: {user?.targetRole || 'Fullstack Engineer'}</h3>
-          <p className="text-gray-400">Keep your profile updated by running the latest AST evaluation against your GitHub.</p>
+      <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 shadow-xl flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div className="flex-1">
+          <h3 className="text-xl lg:text-2xl font-bold text-white mb-1">Target: {user?.targetRole || 'Fullstack Engineer'}</h3>
+          <p className="text-gray-400 text-sm lg:text-base">Keep your profile updated by running the latest AST evaluation against your GitHub.</p>
         </div>
-        <div className="flex items-center space-x-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
           <input 
             type="text" 
             value={githubUrl}
             onChange={(e) => setGithubUrl(e.target.value)}
             placeholder="GitHub Username"
-            className="px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500 w-64"
+            className="px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500 flex-1 lg:w-64"
             disabled={analyzing}
           />
           <button 
             onClick={runAnalysis}
             disabled={analyzing || !githubUrl.trim()}
-            className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 px-6 py-3 rounded-lg font-semibold shadow-lg shadow-blue-900/20 transition-all disabled:opacity-50"
+            className="flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 px-6 py-3 rounded-lg font-semibold shadow-lg shadow-blue-900/20 transition-all disabled:opacity-50 shrink-0"
           >
             {analyzing ? <Loader2 className="animate-spin" size={20} /> : <Play size={20} />}
-            <span>{analyzing ? 'Evaluating Engine...' : 'Run Evaluation'}</span>
+            <span>{analyzing ? 'Evaluating...' : 'Run Evaluation'}</span>
           </button>
         </div>
       </div>
