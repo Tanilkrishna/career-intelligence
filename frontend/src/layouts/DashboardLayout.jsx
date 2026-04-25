@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet, Link, useLocation, Navigate } from 'react-router-dom';
-import { LayoutDashboard, Target, Briefcase, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, Target, Briefcase, Settings, LogOut, Menu, X } from 'lucide-react';
 
 const DashboardLayout = () => {
   const location = useLocation();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const navItems = [
     { icon: LayoutDashboard, label: 'Overview', path: '/dashboard' },
@@ -32,21 +33,39 @@ const DashboardLayout = () => {
     }
   };
 
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+
   return (
-    <div className="flex h-screen bg-gray-900 text-white font-sans">
+    <div className="flex h-screen bg-gray-900 text-white font-sans overflow-hidden">
+      {/* Mobile Overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={toggleSidebar}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-64 bg-gray-800 border-r border-gray-700 flex flex-col">
-        <div className="p-6">
+      <aside className={`
+        fixed inset-y-0 left-0 z-50 w-64 bg-gray-800 border-r border-gray-700 flex flex-col transition-transform duration-300 ease-in-out
+        lg:translate-x-0 lg:static lg:inset-0
+        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
+        <div className="p-6 flex items-center justify-between">
           <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
             CareerIntel
           </h1>
+          <button onClick={toggleSidebar} className="lg:hidden text-gray-400 hover:text-white">
+            <X size={24} />
+          </button>
         </div>
         
-        <nav className="flex-1 px-4 py-4 space-y-2">
+        <nav className="flex-1 px-4 py-4 space-y-2 overflow-y-auto">
           {navItems.map((item) => (
             <Link
               key={item.path}
               to={item.path}
+              onClick={() => setIsSidebarOpen(false)}
               className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
                 location.pathname === item.path 
                   ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' 
@@ -71,20 +90,36 @@ const DashboardLayout = () => {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col overflow-hidden">
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Topbar */}
-        <header className="h-16 bg-gray-800 border-b border-gray-700 flex items-center justify-between px-8">
-          <h2 className="text-xl font-semibold">Dashboard</h2>
+        <header className="h-16 bg-gray-800 border-b border-gray-700 flex items-center justify-between px-4 lg:px-8 shrink-0">
           <div className="flex items-center space-x-4">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center text-sm font-bold shadow-lg">
-              TU
+            <button 
+              onClick={toggleSidebar}
+              className="lg:hidden p-2 text-gray-400 hover:bg-gray-700 rounded-lg"
+            >
+              <Menu size={24} />
+            </button>
+            <h2 className="text-lg lg:text-xl font-semibold truncate">
+              {navItems.find(i => i.path === location.pathname)?.label || 'Dashboard'}
+            </h2>
+          </div>
+          <div className="flex items-center space-x-4">
+            <div className="hidden sm:block text-right">
+              <p className="text-sm font-medium text-gray-200">{user?.email?.split('@')[0]}</p>
+              <p className="text-xs text-gray-400 capitalize">{user?.targetRole?.replace('-', ' ')}</p>
+            </div>
+            <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center text-sm font-bold shadow-lg border border-white/10">
+              {user?.email?.substring(0, 2).toUpperCase() || 'UI'}
             </div>
           </div>
         </header>
 
         {/* Dynamic Outlet */}
-        <div className="flex-1 overflow-auto p-8 relative">
-          <Outlet />
+        <div className="flex-1 overflow-auto p-4 lg:p-8 relative">
+          <div className="max-w-7xl mx-auto">
+            <Outlet />
+          </div>
         </div>
       </main>
     </div>
