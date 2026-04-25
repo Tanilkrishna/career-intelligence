@@ -19,10 +19,17 @@ const DashboardLayout = () => {
     return <Navigate to="/onboarding" replace />;
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    window.location.href = '/login';
+  const handleLogout = async () => {
+    try {
+      const apiClient = (await import('../services/api/client')).default;
+      await apiClient.post('/auth/logout');
+    } catch (err) {
+      console.error('Logout API failed:', err);
+    } finally {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
   };
 
   return (

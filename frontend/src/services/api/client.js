@@ -41,6 +41,7 @@ apiClient.interceptors.response.use(
     // 1. Skip refresh logic if the request is ALREADY to the refresh endpoint
     if (originalRequest.url.includes('/auth/refresh')) {
       if (error.response?.status === 401) {
+        apiClient.post('/auth/logout').catch(() => {});
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         window.location.href = '/login';
@@ -80,6 +81,7 @@ apiClient.interceptors.response.use(
           })
           .catch((err) => {
             processQueue(err, null);
+            apiClient.post('/auth/logout').catch(() => {}); // Fire and forget
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             window.location.href = '/login';
