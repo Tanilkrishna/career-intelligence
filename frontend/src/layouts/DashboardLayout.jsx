@@ -132,8 +132,8 @@ const DashboardLayout = () => {
           </div>
           <div className="flex items-center space-x-4">
             <div className="hidden sm:block text-right">
-              <p className="text-sm font-medium text-gray-200">{user?.email?.split('@')[0]}</p>
-              <p className="text-xs text-gray-400 capitalize">{user?.targetRole?.replace('-', ' ')}</p>
+              <p className="text-sm font-medium text-gray-200">{user?.email?.split('@')?.[0] || 'User'}</p>
+              <p className="text-xs text-gray-400 capitalize">{user?.targetRole?.replace('-', ' ') || 'Developer'}</p>
             </div>
             <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center text-sm font-bold shadow-lg border border-white/10">
               {user?.email?.substring(0, 2).toUpperCase() || 'UI'}

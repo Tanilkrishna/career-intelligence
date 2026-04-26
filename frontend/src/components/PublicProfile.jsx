@@ -49,11 +49,11 @@ const PublicProfile = () => {
         <div className="max-w-5xl mx-auto px-6 h-full flex flex-col justify-end pb-12 relative z-10">
           <div className="flex items-end gap-6">
             <div className="w-24 h-24 md:w-32 md:h-32 rounded-3xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-4xl font-black shadow-2xl border-4 border-gray-950">
-              {user.username.substring(0, 2).toUpperCase()}
+              {user?.username?.substring(0, 2).toUpperCase() || '??'}
             </div>
             <div className="pb-2">
               <h1 className="text-3xl md:text-5xl font-black italic tracking-tighter mb-2">
-                {user.username}
+                {user?.username || 'Anonymous User'}
               </h1>
               <div className="flex flex-wrap gap-3">
                 <span className="px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-xs font-bold uppercase tracking-widest border border-white/10">
