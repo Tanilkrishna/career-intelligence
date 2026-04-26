@@ -6,7 +6,7 @@ class GitHubProvider {
       Accept: 'application/vnd.github.v3+json',
     };
 
-    if (process.env.GITHUB_TOKEN) {
+    if (process.env.GITHUB_TOKEN && process.env.GITHUB_TOKEN !== 'your_token_here') {
       headers.Authorization = `token ${process.env.GITHUB_TOKEN}`;
     }
 

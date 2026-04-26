@@ -6,14 +6,16 @@ const careerScoreSchema = new mongoose.Schema({
   breakdown: {
     core: { type: Number, default: 0 },
     depth: { type: Number, default: 0 },
-    momentum: { type: Number, default: 0 }
+    momentum: { type: Number, default: 0 },
+    engineeringBaseline: { type: Number, default: 0 }
   },
   history: [{
     score: { type: Number, required: true },
     breakdown: {
       core: { type: Number, default: 0 },
       depth: { type: Number, default: 0 },
-      momentum: { type: Number, default: 0 }
+      momentum: { type: Number, default: 0 },
+      engineeringBaseline: { type: Number, default: 0 }
     },
     createdAt: { type: Date, default: Date.now }
   }]

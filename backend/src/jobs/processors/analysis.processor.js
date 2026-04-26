@@ -6,11 +6,14 @@ const githubProvider = require('../../providers/github.provider');
 const codeAnalysisService = require('../../services/codeAnalysis.service');
 const User = require('../../modules/users/user.model');
 const JobRequirement = require('../../modules/jobs/jobRequirement.model');
+const userService = require('../../modules/users/user.service');
 
-exports.processAnalysisJob = async (jobData) => {
+exports.processAnalysisJob = async (jobData, attempt = 1) => {
   const { jobId, userId, githubUrl } = jobData;
   const job = await AnalysisJob.findById(jobId);
   if (!job) return;
+
+  const MAX_ATTEMPTS = 3;
 
   try {
     const user = await User.findById(userId);
@@ -35,8 +38,10 @@ exports.processAnalysisJob = async (jobData) => {
     let dependencies = [];
     let codeEvidence = {};
 
+    let totalReposScanned = 0;
     if (specificRepo) {
       await updateJob(job, `Analyzing specific repo: ${specificRepo}...`, 30);
+      totalReposScanned = 1;
       const tree = await githubProvider.fetchRepoTree(username, specificRepo);
       const packageFiles = tree.filter(node => node.type === 'blob' && node.path.endsWith('package.json'));
       
@@ -52,6 +57,8 @@ exports.processAnalysisJob = async (jobData) => {
       }
       codeEvidence = await codeAnalysisService.getRepoEvidence(username, specificRepo);
     } else {
+      const repos = await githubProvider.fetchUserRepos(username);
+      totalReposScanned = repos.length;
       dependencies = await githubProvider.getUserDependencies(username);
       codeEvidence = await codeAnalysisService.aggregateUserEvidence(username);
     }
@@ -146,19 +153,29 @@ exports.processAnalysisJob = async (jobData) => {
       }
     }
 
-    const computedCareerScore = Math.round(coreScore + depthBonus + momentum);
+    const computedCareerScore = Math.round(coreScore + depthBonus + momentum + (codeEvidence.engineeringBaseline?.score || 0));
     
     await CareerScore.findOneAndUpdate(
       { userId },
       { 
         $set: {
           score: Math.min(1000, computedCareerScore), 
-          breakdown: { core: Math.round(coreScore), depth: Math.round(depthBonus), momentum: Math.round(momentum) } 
+          breakdown: { 
+            core: Math.round(coreScore), 
+            depth: Math.round(depthBonus), 
+            momentum: Math.round(momentum),
+            engineeringBaseline: codeEvidence.engineeringBaseline?.score || 0
+          } 
         },
         $push: {
           history: {
             score: Math.min(1000, computedCareerScore),
-            breakdown: { core: Math.round(coreScore), depth: Math.round(depthBonus), momentum: Math.round(momentum) },
+            breakdown: { 
+              core: Math.round(coreScore), 
+              depth: Math.round(depthBonus), 
+              momentum: Math.round(momentum),
+              engineeringBaseline: codeEvidence.engineeringBaseline?.score || 0
+            },
             createdAt: new Date()
           }
         }
@@ -166,12 +183,33 @@ exports.processAnalysisJob = async (jobData) => {
       { upsert: true }
     );
 
+    // Capture Metadata for "WOW" effect
+    let totalPatterns = 0;
+    Object.values(codeEvidence).forEach(evidence => {
+      if (evidence.usageCount) totalPatterns += evidence.usageCount;
+    });
+    job.metadata = { repoCount: totalReposScanned, totalPatterns };
+
     // Step 6: Update AnalysisJob to completed
     await updateJob(job, 'Completed', 100, 'completed');
     
+    // Growth Layer: Update Streak
+    await userService.updateActivityStreak(userId);
+    
   } catch (error) {
-    console.error(`[Processor] Error processing job ${jobId}:`, error);
-    await updateJob(job, 'Failed', job.progress, 'failed', error.message);
+    console.error(`[Processor] Error processing job ${jobId} (Attempt ${attempt}):`, error.message);
+    
+    if (attempt < MAX_ATTEMPTS) {
+      const delay = Math.pow(2, attempt) * 1000; // Exponential backoff: 2s, 4s...
+      console.log(`[Processor] Retrying job ${jobId} in ${delay/1000}s...`);
+      await updateJob(job, `Transient error. Retrying (${attempt}/${MAX_ATTEMPTS})...`, job.progress);
+      
+      setTimeout(() => {
+        this.processAnalysisJob(jobData, attempt + 1);
+      }, delay);
+    } else {
+      await updateJob(job, 'Failed', job.progress, 'failed', error.message);
+    }
   }
 };
 

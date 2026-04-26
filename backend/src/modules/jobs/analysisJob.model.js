@@ -5,6 +5,10 @@ const analysisJobSchema = new mongoose.Schema({
   status: { type: String, enum: ['queued', 'running', 'completed', 'failed'], default: 'queued' },
   currentStep: { type: String },
   progress: { type: Number, min: 0, max: 100, default: 0 },
+  metadata: {
+    repoCount: { type: Number, default: 0 },
+    totalPatterns: { type: Number, default: 0 }
+  },
   error: { type: String }
 }, { timestamps: true });
 

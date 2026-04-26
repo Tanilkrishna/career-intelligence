@@ -13,10 +13,8 @@ async function runSmokeTest() {
     console.log('Connected to MongoDB');
 
     const user = await User.findOne({ email: 'testuser@careerintel.com' });
-    if (!user) {
-      console.error('Test user not found. Please run seed script first.');
-      process.exit(1);
-    }
+    user.targetRole = 'Backend Engineer';
+    await user.save();
 
     console.log(`Starting smoke test for user: ${user.email} (Target: ${user.targetRole})`);
 
@@ -31,11 +29,11 @@ async function runSmokeTest() {
     console.log(`Job created: ${job._id}`);
 
     // Manually run the processor for this job
-    // We use a mock GitHub URL that the processor can handle
+    // We use a React repo to see if it flags Backend Gaps correctly
     await processAnalysisJob({
       jobId: job._id,
       userId: user._id,
-      githubUrl: 'https://github.com/octocat/Spoon-Knife' // Simple public repo for testing
+      githubUrl: 'https://github.com/facebook/react' 
     });
 
     // Check final state
@@ -46,7 +44,9 @@ async function runSmokeTest() {
     if (finalJob.error) console.error(`Error: ${finalJob.error}`);
 
     const CareerScore = require('./src/modules/users/careerScore.model');
+    const careerService = require('./src/modules/users/career.service');
     const score = await CareerScore.findOne({ userId: user._id });
+    
     if (score) {
       console.log(`\n--- CareerScore Results ---`);
       console.log(`Total Score: ${score.score}`);
@@ -54,6 +54,15 @@ async function runSmokeTest() {
     } else {
       console.log('\nNo CareerScore generated.');
     }
+
+    const recs = await careerService.getRecommendations(user._id);
+    const gaps = await careerService.getCareerGaps(user._id);
+    
+    console.log(`\n--- Critical Gaps ---`);
+    console.log(JSON.stringify(gaps, null, 2));
+
+    console.log(`\n--- Recommendations (Hybrid) ---`);
+    console.log(JSON.stringify(recs, null, 2));
 
     await mongoose.disconnect();
   } catch (err) {

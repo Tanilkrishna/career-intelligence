@@ -1,70 +1,110 @@
-# 🛰️ Career Intelligence: Adaptive Career GPS
-![Version](https://img.shields.io/badge/version-v1.0.0-blue)
-![Status](https://img.shields.io/badge/status-stable-green)
-![License](https://img.shields.io/badge/license-MIT-purple)
+# 🛰️ Career Intelligence: Adaptive AI Career GPS & Sidekick
+![Version](https://img.shields.io/badge/version-v1.2.0-blue?style=for-the-badge)
+![Status](https://img.shields.io/badge/status-production_ready-emerald?style=for-the-badge)
+![AI-Powered](https://img.shields.io/badge/AI-Mentor_Enabled-indigo?style=for-the-badge)
 
 **Stop guessing your career path. Let your code tell the story.**
 
-Career Intelligence is an AI-powered growth platform that performs deep **AST (Abstract Syntax Tree)** analysis on your actual GitHub repositories to calculate your true technical depth, identify critical skill gaps, and provide a personalized roadmap to become "Job-Ready."
+Career Intelligence is a premium, AI-powered growth platform designed for modern engineers. It performs deep **AST (Abstract Syntax Tree)** analysis on your actual GitHub repositories to calculate your true technical depth, identify critical skill gaps, and provide a personalized roadmap to become "Job-Ready."
 
 ---
 
-### 🚀 Key Features
-- **Semantic Code Analysis**: Uses Babel to detect advanced architectural patterns (Custom Hooks, Middleware, etc.) beyond simple dependency counts.
-- **Role-Weighted Scoring**: Evaluates you against real-world job requirements using the **Core + Depth + Momentum** formula.
-- **Evidence Transparency**: See exactly which repositories and files contributed to each skill score via the **Trust Check** dashboard.
-- **Grounded Readiness**: Understand your "Profile Grade" (A, B, C) and technical readiness for Junior, Mid, or Senior-level roles.
+## 🚀 Key Features
+
+### 🧠 Semantic AST Engine
+Uses **Babel** to perform deep recursive scans of your repositories. It doesn't just count dependencies; it detects advanced architectural patterns like:
+- Custom React Hooks & Context Providers
+- Middleware chains & Security interceptors
+- Domain-driven structure & Clean Architecture
+- Unit/Integration test coverage patterns
+
+### 🤖 AI Mentor Sidekick (Strict but Helpful)
+A resident technical architect built into your dashboard.
+- **Strict Pedagogy**: Refuses to give full code solutions to ensure you actually learn.
+- **Step-by-Step Guidance**: Provides architectural patterns, pseudocode, and mental models.
+- **Context-Aware**: Knows your current project, tech stack, and skill gaps.
+
+### 🗺️ Career GPS & Readiness Grade
+- **Weeks-to-Ready**: Predicts exactly when you'll be job-ready based on your current daily commitment and gap complexity.
+- **Milestone Grades**: Tiered grading (A+, A, B+, etc.) calibrated against Senior, Mid, and Junior job requirements.
+
+### 🌐 Shareable Public Profiles
+A high-fidelity, recruiter-ready profile page.
+- **Evidence-Based**: Displays your score trajectory and top skills verified by code.
+- **Universal Links**: Shareable via custom username or unique user identifier.
+- **Technical Aesthetics**: Dark-mode, glassmorphic design that screams "Senior Engineer."
 
 ---
 
-### 🛠️ Tech Stack
-- **Frontend**: React 18, TailwindCSS, Recharts (Visualizations), Lucide React.
-- **Backend**: Node.js, Express, MongoDB (Mongoose).
-- **Engine**: Babel Parser & Traverse for AST analysis.
-- **Integration**: GitHub REST API with recursive tree scanning.
+## 🛠️ Technology Stack
+
+### Core Ecosystem
+- **Frontend**: React 19, Vite, TailwindCSS 4, Recharts (Premium Visualizations), Lucide React.
+- **Backend**: **Express 5.2.1** (Modern Async Error Handling), Node.js, MongoDB (Mongoose 9).
+- **AI Integration**: HuggingFace Hub Router (`openai/gpt-oss-20b`) with a 3000-token technical context window.
+
+### Architecture & Security
+- **Modern Async**: Native Promise handling in Express 5 routes.
+- **Data Integrity**: Zod-based schema validation for all user inputs.
+- **Authentication**: JWT-based stateless auth with secure local persistence.
+- **CORS Hardened**: Production-ready cross-origin configuration for Vercel/Render deployments.
 
 ---
 
-### 🏁 Quick Start
-1. **Clone & Install**:
-   ```bash
-   git clone https://github.com/Tanilkrishna/career-intelligence.git
-   cd career-intelligence
-   # Install backend
-   cd backend && npm install
-   # Install frontend
-   cd ../frontend && npm install
-   ```
-2. **Environment**:
-   Create a `.env` in the `backend/` folder:
-   ```env
-   PORT=5000
-   MONGO_URI=your_mongodb_uri
-   JWT_SECRET=your_secret
-   GITHUB_TOKEN=your_personal_access_token (recommended for rate limits)
-   ```
-3. **Run**:
-   - Backend: `npm run dev` (inside /backend)
-   - Frontend: `npm run dev` (inside /frontend)
+## 🏁 Installation & Setup
+
+### 1. Prerequisites
+- Node.js v18+
+- MongoDB Atlas account (or local MongoDB)
+- GitHub Personal Access Token (for high-rate AST scanning)
+- HuggingFace API Token (for the AI Sidekick)
+
+### 2. Clone & Install
+```bash
+git clone https://github.com/Tanilkrishna/career-intelligence.git
+cd career-intelligence
+
+# Install Backend
+cd backend && npm install
+
+# Install Frontend
+cd ../frontend && npm install
+```
+
+### 3. Environment Configuration
+Create a `.env` file in the `backend/` directory:
+```env
+PORT=5000
+NODE_ENV=production
+MONGO_URI=your_mongodb_atlas_uri
+JWT_SECRET=your_ultra_secure_secret
+HF_TOKEN=your_huggingface_api_token
+GITHUB_TOKEN=your_github_pat
+FRONTEND_URL=http://localhost:5173
+```
+
+### 4. Start Development
+```bash
+# In /backend
+npm run dev
+
+# In /frontend
+npm run dev
+```
 
 ---
 
-### 🧭 Scoring Logic
-- **Core Score (600 pts)**: Tied to meeting mandatory role requirements.
-- **Depth Bonus (300 pts)**: Calculated from tiered technical pattern detection.
-- **Momentum (100 pts)**: Based on activity and evaluation frequency.
+## 🧪 Scoring Formula (V2.0)
+The platform uses a role-weighted composite formula:
+- **Core (60% / 600pts)**: Meeting the mandatory baseline requirements for your target role.
+- **Depth (30% / 300pts)**: Bonus points for advanced patterns (e.g., CI/CD, Docker, Microservices).
+- **Momentum (10% / 100pts)**: Reward for consistent activity and iterative repository improvements.
 
 ---
 
-### 🛡️ Known Limitations
-- **Language Support**: Currently optimized for the JavaScript/TypeScript ecosystem.
-- **Rate Limits**: Performance depends on GitHub API rate limits (Personal Access Token highly recommended).
-- **Sampling**: Large repositories are sampled to ensure fast, responsive evaluations.
+## 📣 Design Philosophy
+**"Aesthetics are Features."**
+The platform is built with a "Browser-Native Zero" philosophy—replacing all native dialogs with high-fidelity, technical-themed components. Every interaction includes subtle micro-animations and transitions to provide a premium, state-of-the-art user experience.
 
 ---
-
-### 📣 Soft Launch
-> "I built a tool that analyzes your real GitHub code (not your resume) and tells you exactly what to build next to become job-ready."
-
----
-*Created with ❤️ for the Engineering Community.*
+*Created with ❤️ for the Engineering Community by the Career Intelligence Team.*

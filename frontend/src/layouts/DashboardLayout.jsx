@@ -1,10 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, Navigate } from 'react-router-dom';
+import { useToast } from '../components/ToastProvider';
 import { LayoutDashboard, Target, Briefcase, Settings, LogOut, Menu, X } from 'lucide-react';
+import MaintenanceBanner from '../components/MaintenanceBanner';
+import apiClient from '../services/api/client';
 
 const DashboardLayout = () => {
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [serviceStatus, setServiceStatus] = useState({ type: 'info', message: '' });
+  const toast = useToast();
+
+  useEffect(() => {
+    const checkHealth = async () => {
+      try {
+        await apiClient.get('/health');
+        setServiceStatus({ type: 'info', message: '' }); // Clear message if OK
+      } catch (err) {
+        if (err.message.includes('buffering timed out') || !err.response) {
+          setServiceStatus({ 
+            type: 'warning', 
+            message: 'We’re warming things up—analysis may take a bit longer today.' 
+          });
+        }
+      }
+    };
+
+    checkHealth();
+    const interval = setInterval(checkHealth, 30000); // Check every 30s
+    return () => clearInterval(interval);
+  }, []);
 
   const navItems = [
     { icon: LayoutDashboard, label: 'Overview', path: '/dashboard' },
@@ -29,7 +54,7 @@ const DashboardLayout = () => {
     } finally {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      window.location.href = '/login?logout=1';
     }
   };
 
@@ -91,6 +116,7 @@ const DashboardLayout = () => {
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <MaintenanceBanner type={serviceStatus.type} message={serviceStatus.message} />
         {/* Topbar */}
         <header className="h-16 bg-gray-800 border-b border-gray-700 flex items-center justify-between px-4 lg:px-8 shrink-0">
           <div className="flex items-center space-x-4">

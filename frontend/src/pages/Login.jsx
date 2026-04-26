@@ -1,18 +1,27 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import apiClient from '../services/api/client';
+import { useToast } from '../components/ToastProvider';
 import { Target, Loader2, ArrowRight } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const toast = useToast();
+
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('logout')) {
+      toast.success("Logged out successfully");
+      // Clear the param from URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [toast]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setError(null);
     setLoading(true);
 
     try {
@@ -22,9 +31,11 @@ const Login = () => {
       localStorage.setItem('token', accessToken);
       localStorage.setItem('user', JSON.stringify(user));
 
+      toast.success("Login successful ✅");
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to login');
+      const message = err.response?.data?.message || 'Failed to login';
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -67,7 +78,7 @@ const Login = () => {
               />
             </div>
 
-            {error && <div className="text-red-400 text-sm font-medium p-3 bg-red-900/20 rounded-lg border border-red-900/50">{error}</div>}
+            {/* Removed inline error for toasts */}
 
             <button
               type="submit"

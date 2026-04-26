@@ -20,6 +20,12 @@ const PATTERNS = {
     { name: 'Schema', regex: /new mongoose\.Schema\(/g, depth: 1 },
     { name: 'Aggregation', regex: /\.aggregate\(\[/g, depth: 3 },
     { name: 'Middleware', regex: /\.pre\(['"]save['"]/g, depth: 3 }
+  ],
+  'architecture': [
+    { name: 'Microservices', regex: /(gateway|docker-compose|kubernetes|proxy_pass)/gi, depth: 3 },
+    { name: 'EventDriven', regex: /(kafka|rabbitmq|pubsub|redis\.createClient.*\.on|EventEmitter)/gi, depth: 3 },
+    { name: 'DataModeling', regex: /(prisma|typeorm|sequelize|knex|migrations)/gi, depth: 2 },
+    { name: 'Observability', regex: /(winston|pino|prometheus|otel|tracing|sentry)/gi, depth: 2 }
   ]
 };
 
@@ -43,15 +49,17 @@ class CodeAnalysisService {
         .slice(0, 8);
 
       const evidence = {
-        react: { usageCount: 0, patterns: new Set(), depth: 0, filesAnalyzed: 0 },
-        express: { usageCount: 0, patterns: new Set(), depth: 0, filesAnalyzed: 0 },
-        mongoose: { usageCount: 0, patterns: new Set(), depth: 0, filesAnalyzed: 0 }
+        react: { usageCount: 0, patterns: new Set(), depth: 0, filesAnalyzed: 0, proofs: [] },
+        express: { usageCount: 0, patterns: new Set(), depth: 0, filesAnalyzed: 0, proofs: [] },
+        mongoose: { usageCount: 0, patterns: new Set(), depth: 0, filesAnalyzed: 0, proofs: [] },
+        architecture: { usageCount: 0, patterns: new Set(), depth: 0, filesAnalyzed: 0, proofs: [] }
       };
 
       for (const file of relevantFiles) {
         const content = await githubProvider.fetchFileContent(username, repoName, file.path);
         if (!content) continue;
 
+        const lines = content.split('\n');
         let fileHadEvidence = false;
 
         // Phase 1: Regex Scan
@@ -63,6 +71,21 @@ class CodeAnalysisService {
               evidence[tech].patterns.add(p.name);
               evidence[tech].depth = Math.max(evidence[tech].depth, p.depth);
               fileHadEvidence = true;
+
+              // Extract proof (file + line)
+              lines.forEach((line, index) => {
+                if (p.regex.test(line)) {
+                  // Avoid pushing too many duplicate proofs for the same pattern in same file
+                  if (evidence[tech].proofs.length < 20) {
+                    evidence[tech].proofs.push({
+                      pattern: p.name,
+                      file: file.path,
+                      line: index + 1,
+                      snippet: line.trim().substring(0, 100)
+                    });
+                  }
+                }
+              });
             }
           });
         });
@@ -127,9 +150,53 @@ class CodeAnalysisService {
     return depths;
   }
 
+  async getEngineeringBaseline(username, repos) {
+    let testPresence = 0;
+    let configStandards = 0;
+    let structureDepth = 0;
+    let totalFiles = 0;
+
+    // Sampling the most recent 3 repos for baseline signals
+    const sampleRepos = repos.slice(0, 3);
+    
+    for (const repo of sampleRepos) {
+      const tree = await githubProvider.fetchRepoTree(username, repo.name);
+      
+      // 1. Check for tests
+      const hasTests = tree.some(n => 
+        n.path.includes('test') || n.path.includes('spec') || n.path.endsWith('.test.js') || n.path.endsWith('.spec.js')
+      );
+      if (hasTests) testPresence += 33;
+
+      // 2. Check for configs (Lint, Prettier, TS, Docker, CI)
+      const hasConfig = tree.some(n => 
+        ['.eslintrc', '.prettierrc', 'tsconfig.json', 'Dockerfile', '.github/workflows'].some(c => n.path.includes(c))
+      );
+      if (hasConfig) configStandards += 33;
+
+      // 3. Structure depth
+      const maxDepth = Math.max(...tree.map(n => n.path.split('/').length));
+      if (maxDepth > 3) structureDepth += 10;
+      
+      totalFiles += tree.length;
+    }
+
+    const baselineScore = Math.min(100, (testPresence + configStandards + structureDepth));
+    return {
+      score: Math.round(baselineScore),
+      signals: {
+        tests: testPresence > 0,
+        configs: configStandards > 0,
+        depth: structureDepth > 0
+      }
+    };
+  }
+
   async aggregateUserEvidence(username) {
     const repos = await githubProvider.fetchUserRepos(username);
-    const aggregated = {};
+    const aggregated = {
+      engineeringBaseline: await this.getEngineeringBaseline(username, repos)
+    };
 
     // Analyze top 5 most recently updated repos for deep patterns
     const topRepos = repos.slice(0, 5);
@@ -141,19 +208,26 @@ class CodeAnalysisService {
       Object.entries(repoEvidence).forEach(([tech, data]) => {
         if (data.usageCount > 0) {
           if (!aggregated[tech]) {
-            aggregated[tech] = { usageCount: 0, patterns: new Set(), maxDepth: 0, repos: new Set(), filesAnalyzed: 0 };
+            aggregated[tech] = { usageCount: 0, patterns: new Set(), maxDepth: 0, repos: new Set(), filesAnalyzed: 0, proofs: [] };
           }
           aggregated[tech].usageCount += data.usageCount;
           aggregated[tech].filesAnalyzed += data.filesAnalyzed;
           data.patterns.forEach(p => aggregated[tech].patterns.add(p));
           aggregated[tech].maxDepth = Math.max(aggregated[tech].maxDepth, data.depth);
           aggregated[tech].repos.add(repo.name);
+          
+          // Add proofs with repo context, limit total proofs to keep payload manageable
+          if (data.proofs && aggregated[tech].proofs.length < 30) {
+            const repoProofs = data.proofs.map(p => ({ ...p, repo: repo.name }));
+            aggregated[tech].proofs.push(...repoProofs.slice(0, 5));
+          }
         }
       });
     }
 
     // Serialize
     Object.keys(aggregated).forEach(tech => {
+      if (tech === 'engineeringBaseline') return;
       aggregated[tech].patterns = Array.from(aggregated[tech].patterns);
       aggregated[tech].repos = Array.from(aggregated[tech].repos);
     });

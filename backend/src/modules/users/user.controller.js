@@ -5,6 +5,8 @@ const { successResponse } = require('../../shared/response');
 
 const onboardingSchema = z.object({
   targetRole: z.string().min(2, "Target role must be at least 2 characters long"),
+  techStack: z.enum(['frontend', 'backend', 'fullstack', 'custom']),
+  customTechnologies: z.array(z.string()).optional().default([]),
   experienceLevel: z.enum(['Beginner', 'Intermediate', 'Advanced']),
   dailyTime: z.number().min(5, "Minimum 5 minutes required")
 });
@@ -22,4 +24,10 @@ exports.updateOnboarding = catchAsync(async (req, res) => {
 
   const user = await userService.updateOnboarding(userId, parsedData);
   return successResponse(res, 200, user, 'Onboarding completed successfully');
+});
+
+exports.getPublicProfile = catchAsync(async (req, res) => {
+  const { username } = req.params;
+  const profileData = await userService.getPublicProfile(username);
+  return successResponse(res, 200, profileData, 'Public profile retrieved successfully');
 });

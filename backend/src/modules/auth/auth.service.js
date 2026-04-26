@@ -14,9 +14,12 @@ exports.register = async (email, password) => {
   const passwordHash = await bcrypt.hash(password, 10);
 
   // Create user
+  const username = email.split('@')[0].toLowerCase() + Math.floor(Math.random() * 1000);
+  
   const user = await User.create({
     email,
-    passwordHash
+    passwordHash,
+    username
   });
 
   // Generate tokens

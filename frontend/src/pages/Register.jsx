@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import apiClient from '../services/api/client';
+import { useToast } from '../components/ToastProvider';
 import { Target, Loader2, ArrowRight } from 'lucide-react';
 
 const Register = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const toast = useToast();
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    setError(null);
     setLoading(true);
 
     try {
@@ -22,9 +22,11 @@ const Register = () => {
       localStorage.setItem('token', accessToken);
       localStorage.setItem('user', JSON.stringify(user));
 
+      toast.success("Account created! 🎉");
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to register');
+      const message = err.response?.data?.message || 'Failed to register';
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -68,7 +70,7 @@ const Register = () => {
               />
             </div>
 
-            {error && <div className="text-red-400 text-sm font-medium p-3 bg-red-900/20 rounded-lg border border-red-900/50">{error}</div>}
+            {/* Removed inline error for toasts */}
 
             <button
               type="submit"

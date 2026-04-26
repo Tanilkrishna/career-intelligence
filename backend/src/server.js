@@ -24,12 +24,53 @@ if (process.env.NODE_ENV === 'production' && MONGO_URI.includes('localhost')) {
 // Required for secure cookies on Render/Heroku/etc.
 app.set('trust proxy', 1);
 
+// General Middlewares
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:5174',
+  'http://127.0.0.1:5174',
+  'https://career-intelligence-omega.vercel.app',
+  process.env.FRONTEND_URL
+].filter(Boolean);
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.error('[CORS ERROR] Origin not allowed:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+};
+
+// Security Middlewares
+app.use(helmet());
+
+// Apply CORS early
+app.use(cors(corsOptions));
+app.options(/.*/, cors(corsOptions));
+
 const Skill = require('./modules/skills/skill.model');
 const seedData = require('../scripts/seed');
 
-// Connect to MongoDB
-mongoose.connect(MONGO_URI)
-  .then(async () => {
+// Connect to MongoDB with robust retry logic
+const connectDB = async () => {
+  const options = {
+    serverSelectionTimeoutMS: 5000,
+    socketTimeoutMS: 45000,
+  };
+
+  try {
+    await mongoose.connect(MONGO_URI, options);
     console.log('Connected to MongoDB');
     
     // Auto-seed if database is empty
@@ -38,16 +79,28 @@ mongoose.connect(MONGO_URI)
       console.log('🌱 Database appears empty. Running initial seed...');
       await seedData(false);
     }
-  })
-  .catch(err => console.error('MongoDB connection error:', err));
+  } catch (err) {
+    console.error('MongoDB connection error:', err.message);
+    console.log('Retrying in 5 seconds...');
+    setTimeout(connectDB, 5000);
+  }
+};
 
-// Security Middlewares
-app.use(helmet());
+mongoose.connection.on('disconnected', () => {
+  console.log('MongoDB disconnected. Attempting to reconnect...');
+  connectDB();
+});
+
+mongoose.connection.on('error', (err) => {
+  console.error('MongoDB connection error event:', err.message);
+});
+
+connectDB();
 
 // Rate Limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+  max: 1000, // Increased to 1000 to prevent developer 429s during testing
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
 });
@@ -72,37 +125,6 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(cookieParser());
 app.use(morgan('dev')); // HTTP logging
-
-// General Middlewares
-const allowedOrigins = [
-  'http://localhost:5173',
-  'https://career-intelligence-omega.vercel.app',
-  process.env.FRONTEND_URL
-].filter(Boolean);
-
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      console.error('[CORS ERROR] Origin not allowed:', origin);
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-  optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
-};
-
-// Apply CORS to all routes
-app.use(cors(corsOptions));
-
-// Explicitly handle preflight requests for all routes (Express 5 compatibility)
-app.options(/.*/, cors(corsOptions));
 
 // Initialize background worker
 require('./jobs/worker');

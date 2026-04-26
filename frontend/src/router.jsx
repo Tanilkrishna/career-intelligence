@@ -7,6 +7,7 @@ import Recommendations from './pages/Recommendations';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Onboarding from './pages/Onboarding';
+import PublicProfile from './components/PublicProfile';
 
 // Simple wrapper to guard protected routes
 const ProtectedRoute = ({ children }) => {
@@ -19,6 +20,10 @@ const router = createBrowserRouter([
   {
     path: '/',
     element: <App />, // The Landing page
+  },
+  {
+    path: '/career/:username',
+    element: <PublicProfile />
   },
   {
     path: '/login',

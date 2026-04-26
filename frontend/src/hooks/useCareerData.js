@@ -2,20 +2,15 @@ import { useState, useEffect } from 'react';
 import apiClient from '../services/api/client';
 
 export const useCareerData = () => {
-  const [score, setScore] = useState(null);
-  const [gaps, setGaps] = useState([]);
+  const [state, setState] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const fetchCareerData = async () => {
     setLoading(true);
     try {
-      const [scoreRes, gapsRes] = await Promise.all([
-        apiClient.get('/career/score'),
-        apiClient.get('/career/gaps')
-      ]);
-      setScore(scoreRes.data.data);
-      setGaps(gapsRes.data.data);
+      const res = await apiClient.get('/career/state');
+      setState(res.data.data);
       setError(null);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load career data');
@@ -28,5 +23,13 @@ export const useCareerData = () => {
     fetchCareerData();
   }, []);
 
-  return { score, gaps, loading, error, refetch: fetchCareerData };
+  return { 
+    state,
+    score: state?.careerScore, 
+    gaps: state?.gaps, 
+    recommendations: state?.recommendations,
+    loading, 
+    error, 
+    refetch: fetchCareerData 
+  };
 };
